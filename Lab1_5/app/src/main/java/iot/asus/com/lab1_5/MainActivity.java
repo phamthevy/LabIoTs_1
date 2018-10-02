@@ -67,7 +67,7 @@ public class MainActivity extends Activity {
             mLedStateG = !mLedStateG;
             try{
                 mLedGpioG.setValue(mLedStateG);
-                mHandler.postDelayed(mRunnableLedG,500);
+                mHandler.postDelayed(mRunnableLedG,1000);
             } catch (IOException e){
                 Log.e(TAG,"Error: ",e);
             }

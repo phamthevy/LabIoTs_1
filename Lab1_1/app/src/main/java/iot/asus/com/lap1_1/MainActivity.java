@@ -82,6 +82,7 @@ public class MainActivity extends Activity {
                         mLedStateB = true;
                         mLedStateG = true;
                         mLedState = LED_GREEN;
+
                         Log.d(TAG, "Led Red");
                         break;
                     case LED_GREEN:

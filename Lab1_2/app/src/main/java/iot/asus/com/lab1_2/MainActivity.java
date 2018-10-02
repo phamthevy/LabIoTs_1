@@ -4,6 +4,8 @@ import android.app.Activity;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
+import android.view.View;
+import android.widget.Button;
 
 import com.google.android.things.pio.Gpio;
 import com.google.android.things.pio.GpioCallback;
@@ -48,10 +50,13 @@ public class MainActivity extends Activity {
     private boolean mLedStateR = true;
     private boolean mLedStateG = true;
     private boolean mLedStateB = true;
+    Button mBtn;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        mBtn = (Button) findViewById(R.id.mbtn);
         try {
             PeripheralManager manager = PeripheralManager.getInstance();
 
@@ -62,10 +67,10 @@ public class MainActivity extends Activity {
             mButtonGpio.setEdgeTriggerType(Gpio.EDGE_FALLING);
 
             Log.i(TAG,"Gonna go register for button");
-            mButtonGpio.registerGpioCallback(new GpioCallback() {
+
+            mBtn.setOnClickListener(new View.OnClickListener() {
                 @Override
-                public boolean onGpioEdge(Gpio gpio) {
-                    Log.i(TAG, "Button pressed");
+                public void onClick(View view) {
                     switch(intervalBetweenBlink){
                         case INTERVAL_2s:
                             intervalBetweenBlink = 1000;
@@ -84,9 +89,33 @@ public class MainActivity extends Activity {
                         default:
                             throw new IllegalStateException("State is incorrect");
                     }
-                    return true;
                 }
             });
+//            mButtonGpio.registerGpioCallback(new GpioCallback() {
+//                @Override
+//                public boolean onGpioEdge(Gpio gpio) {
+//                    Log.i(TAG, "Button pressed");
+//                    switch(intervalBetweenBlink){
+//                        case INTERVAL_2s:
+//                            intervalBetweenBlink = 1000;
+//                            Log.i(TAG,"Blink in 1s");
+//                            break;
+//
+//                        case INTERVAL_1s:
+//                            intervalBetweenBlink = 500;
+//                            Log.i(TAG,"Blink in 0.5s");
+//                            break;
+//
+//                        case INTERVAL_05s:
+//                            intervalBetweenBlink = 2000;
+//                            Log.i(TAG,"Blink in 2s");
+//                            break;
+//                        default:
+//                            throw new IllegalStateException("State is incorrect");
+//                    }
+//                    return true;
+//                }
+//            });
 
             String ledPinR = BoardDefault.getGPIOForLedR();
             mLedGpioR = manager.openGpio(ledPinR);
