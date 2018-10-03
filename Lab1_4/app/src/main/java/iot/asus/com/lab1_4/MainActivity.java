@@ -4,6 +4,8 @@ import android.app.Activity;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
+import android.view.View;
+import android.widget.Button;
 
 import com.google.android.things.pio.Gpio;
 import com.google.android.things.pio.GpioCallback;
@@ -34,8 +36,12 @@ import java.io.IOException;
 public class MainActivity extends Activity {
     private static final String TAG = MainActivity.class.getSimpleName();
     private static final double PULSE_PERIOD_MS = 20;
+    private static final double MIN_ACTIVE = 0;
+    private static final double MAX_ACTIVE = 20;
+    private double mActivePulseDuration;
 
-    private static final int INTERVAL_BETWEEN_STEPS_MS = 3000;
+    private static double Change_step = 0.2;
+    private static final int INTERVAL_BETWEEN_STEPS_MS = 1050;
 
     private static final String buttonPin = BoardDefault.getGPIOForButton();
 
@@ -59,11 +65,13 @@ public class MainActivity extends Activity {
     private int mLedState = LED_RED;
 
     private Handler mHandler = new Handler();
-    private double mActivePulseDuration;
+    Button mBtn;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        mBtn=(Button) findViewById(R.id.btn) ;
         Log.i(TAG, "Starting ButtonActivity");
         try {
             PeripheralManager manager = PeripheralManager.getInstance();
@@ -80,6 +88,7 @@ public class MainActivity extends Activity {
             mLedGpioB.setDirection(Gpio.DIRECTION_OUT_INITIALLY_LOW);
             mLedGpioB.setValue(true);
 
+            mActivePulseDuration = MIN_ACTIVE;
             mPwm = manager.openPwm(BoardDefault.getGPIOForPwm());
             mPwm.setPwmFrequencyHz(1000 / PULSE_PERIOD_MS);
             mPwm.setPwmDutyCycle(0);
@@ -90,9 +99,9 @@ public class MainActivity extends Activity {
             mButtonGpio.setEdgeTriggerType(Gpio.EDGE_FALLING);
 
             Log.i(TAG, "Gonna go register for button");
-            mButtonGpio.registerGpioCallback(new GpioCallback() {
+            mBtn.setOnClickListener(new View.OnClickListener() {
                 @Override
-                public boolean onGpioEdge(Gpio gpio) {
+                public void onClick(View view) {
                     switch (state) {
                         case STATE_LED:
                             state = STATE_RED;
@@ -111,9 +120,32 @@ public class MainActivity extends Activity {
                             break;
                     }
                     Log.i(TAG, "Button pressed" + state);
-                    return true;
                 }
             });
+//            mButtonGpio.registerGpioCallback(new GpioCallback() {
+//                @Override
+//                public boolean onGpioEdge(Gpio gpio) {
+//                    switch (state) {
+//                        case STATE_LED:
+//                            state = STATE_RED;
+//                            break;
+//                        case STATE_RED:
+//                            state = STATE_GREEN;
+//                            break;
+//                        case STATE_GREEN:
+//                            state = STATE_BLUE;
+//                            break;
+//                        case STATE_BLUE:
+//                            state = STATE_LED;
+//                            break;
+//                        default:
+//                            Log.e(TAG, "Error");
+//                            break;
+//                    }
+//                    Log.i(TAG, "Button pressed" + state);
+//                    return true;
+//                }
+//            });
 
             mHandler.post(mChangePWMRunnable);
         } catch (IOException e) {
@@ -153,6 +185,11 @@ public class MainActivity extends Activity {
                 return;
             }
 
+            mActivePulseDuration += Change_step;
+            if (mActivePulseDuration > MAX_ACTIVE || mActivePulseDuration < MIN_ACTIVE){
+                mActivePulseDuration = mActivePulseDuration > MAX_ACTIVE ? MAX_ACTIVE : MIN_ACTIVE;
+                Change_step = - Change_step;
+            }
             try {
                 switch (mLedState) {
                     case LED_RED:
@@ -181,11 +218,11 @@ public class MainActivity extends Activity {
                 mLedGpioR.setValue(mLedStateR);
                 mLedGpioB.setValue(mLedStateB);
 
-                if (state == mLedState) {
-                    mPwm.setPwmDutyCycle(90);
-                } else {
+                //if (state == mLedState) {
                     mPwm.setPwmDutyCycle(0);
-                }
+//                } else {
+//                    mPwm.setPwmDutyCycle(0);
+//                }
                 mHandler.postDelayed(this, INTERVAL_BETWEEN_STEPS_MS);
             } catch (IOException e) {
                 Log.e(TAG, "Error on PeripheralIO API", e);
